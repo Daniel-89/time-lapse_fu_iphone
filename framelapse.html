@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="FrameLapse">
+<title>FrameLapse</title>
+<style>
+  :root {
+    --bg:      #080808;
+    --bg2:     #111113;
+    --bg3:     #1a1a1e;
+    --border:  #2a2a30;
+    --amber:   #E8900A;
+    --amber2:  #ffa820;
+    --red:     #ff3830;
+    --green:   #34c759;
+    --text:    #f0f0f0;
+    --muted:   #666672;
+    --sub:     #999aaa;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bot: env(safe-area-inset-bottom, 0px);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  /* ── SCREENS ─────────────────────────────────────── */
+  .screen {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .screen.active { opacity: 1; pointer-events: all; }
+
+  /* ── SETUP SCREEN ────────────────────────────────── */
+  #setupScreen {
+    padding-top: calc(var(--safe-top) + 20px);
+    padding-bottom: calc(var(--safe-bot) + 16px);
+    overflow-y: auto;
+  }
+  .app-wordmark {
+    padding: 0 24px 24px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .app-name {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--amber);
+    font-weight: 600;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .app-tagline {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    margin-top: 4px;
+    letter-spacing: -0.5px;
+  }
+
+  .setup-sections { padding: 0 24px; }
+
+  .section { padding: 20px 0; border-bottom: 1px solid var(--border); }
+  .section:last-of-type { border-bottom: none; }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin-bottom: 14px;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+
+  /* Lens pills */
+  .pill-row { display: flex; gap: 8px; }
+  .pill {
+    flex: 1;
+    padding: 10px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--sub);
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .pill.active {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: #000;
+  }
+  .pill:disabled { opacity: 0.28; cursor: not-allowed; }
+
+  /* Interval input */
+  .interval-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .interval-wrap:focus-within { border-color: var(--amber); }
+  #intervalInput {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 300;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    padding: 14px 16px;
+    outline: none;
+    min-width: 0;
+    letter-spacing: -0.5px;
+  }
+  #intervalInput::placeholder { color: var(--muted); }
+  .interval-unit {
+    font-size: 14px;
+    color: var(--muted);
+    padding: 0 16px 0 0;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Precision display */
+  .precision-display {
+    margin-top: 8px;
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    min-height: 16px;
+  }
+  .precision-display.ok { color: var(--amber); }
+
+  /* Toggle */
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .toggle-info { flex: 1; }
+  .toggle-title { font-size: 15px; font-weight: 500; }
+  .toggle-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .toggle-switch {
+    width: 52px; height: 30px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+  }
+  .toggle-switch.on { background: var(--green); border-color: var(--green); }
+  .toggle-switch::after {
+    content: '';
+    position: absolute;
+    width: 26px; height: 26px;
+    background: #fff;
+    border-radius: 50%;
+    top: 1px; left: 1px;
+    transition: left 0.2s;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  }
+  .toggle-switch.on::after { left: 23px; }
+
+  /* FPS */
+  .fps-row { display: flex; gap: 8px; }
+  .fps-pill {
+    flex: 1;
+    padding: 9px 0;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    color: var(--sub);
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .fps-pill.active {
+    background: var(--bg3);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+
+  /* Start button */
+  .start-btn {
+    width: 100%;
+    padding: 17px;
+    border-radius: 14px;
+    background: var(--amber);
+    color: #000;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    margin-top: 4px;
+    letter-spacing: 0.02em;
+    transition: opacity 0.15s;
+  }
+  .start-btn:disabled { opacity: 0.4; }
+  .start-btn:active { opacity: 0.8; }
+
+  .error-text {
+    font-size: 13px;
+    color: var(--red);
+    text-align: center;
+    min-height: 18px;
+    margin-top: 6px;
+  }
+
+  /* ── RECORD SCREEN ───────────────────────────────── */
+  #recordScreen { background: #000; }
+
+  .viewfinder-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  #viewfinder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Heads-up overlays */
+  .hud-top {
+    position: absolute;
+    top: calc(var(--safe-top) + 12px);
+    left: 16px; right: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    pointer-events: none;
+  }
+  .hud-pill {
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .hud-pill.rec-pill {
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .rec-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  /* Record controls bar */
+  .rec-controls {
+    background: rgba(8,8,8,0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    padding: 14px 20px calc(var(--safe-bot) + 16px);
+    border-top: 1px solid var(--border);
+  }
+
+  /* Lens switcher */
+  .lens-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .lens-orb {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s;
+    font-family: 'SF Mono', 'Courier New', monospace;
+  }
+  .lens-orb.active {
+    background: rgba(232,144,10,0.18);
+    border-color: var(--amber);
+    color: var(--amber);
+  }
+  .lens-orb:disabled { opacity: 0.25; cursor: not-allowed; }
+
+  /* Next-frame progress bar */
+  .next-frame-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .next-frame-fill {
+    height: 100%;
+    background: var(--amber);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.1s linear;
+  }
+  .next-frame-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    text-align: center;
+    margin-bottom: 16px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Bottom action row */
+  .action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .action-side-btn {
+    flex: 1;
+    padding: 12px 0;
+    border-radius: 12px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+  }
+  .action-side-btn:active { opacity: 0.7; }
+  .action-side-btn.amber {
+    background: rgba(232,144,10,0.12);
+    border-color: rgba(232,144,10,0.4);
+    color: var(--amber);
+  }
+
+  /* Big shutter button */
+  .shutter-btn {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: #fff;
+    border: 5px solid rgba(255,255,255,0.25);
+    cursor: pointer;
+    position: relative;
+    flex-shrink: 0;
+    transition: transform 0.1s, background 0.2s;
+    box-shadow: 0 0 0 2px rgba(255,255,255,0.5);
+  }
+  .shutter-btn:active { transform: scale(0.92); }
+  .shutter-btn.recording {
+    background: var(--red);
+    box-shadow: 0 0 0 2px rgba(255,56,48,0.5);
+  }
+  .shutter-btn.recording::after {
+    content: '';
+    position: absolute;
+    width: 22px; height: 22px;
+    background: #fff;
+    border-radius: 5px;
+    top: 50%; left: 50%;
+    transform: translate(-50%,-50%);
+  }
+
+  /* ── EXPORT SCREEN ───────────────────────────────── */
+  #exportScreen {
+    padding-top: calc(var(--safe-top) + 0px);
+    padding-bottom: calc(var(--safe-bot) + 0px);
+  }
+
+  .export-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .export-back-btn {
+    width: 36px; height: 36px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    color: var(--text);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .export-title { font-size: 18px; font-weight: 700; }
+
+  .export-body {
+    flex: 1;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  /* Stats cards */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .stat-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    color: var(--amber);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { font-size: 11px; color: var(--muted); letter-spacing: 0.05em; text-transform: uppercase; }
+
+  /* Summary card */
+  .summary-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+  }
+  .summary-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 5px 0;
+    font-size: 13px;
+  }
+  .summary-row + .summary-row { border-top: 1px solid var(--border); }
+  .summary-key { color: var(--muted); }
+  .summary-val {
+    font-family: 'SF Mono', 'Courier New', monospace;
+    color: var(--text);
+    font-size: 13px;
+  }
+
+  /* Export progress */
+  .export-progress-wrap { display: none; }
+  .export-progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin: 10px 0;
+  }
+  .export-progress-fill {
+    height: 100%;
+    background: var(--amber);
+    width: 0%;
+    border-radius: 2px;
+    transition: width 0.15s;
+  }
+  .export-status-text {
+    font-size: 12px;
+    color: var(--sub);
+    font-family: 'SF Mono', 'Courier New', monospace;
+    text-align: center;
+  }
+
+  /* Buttons */
+  .btn-group { display: flex; flex-direction: column; gap: 10px; margin-top: auto; }
+  .full-btn {
+    width: 100%;
+    padding: 16px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    letter-spacing: 0.01em;
+  }
+  .full-btn:active { transform: scale(0.97); opacity: 0.85; }
+  .full-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .full-btn.primary { background: var(--amber); color: #000; }
+  .full-btn.secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); }
+  .full-btn.danger { background: rgba(255,56,48,0.12); color: var(--red); border: 1px solid rgba(255,56,48,0.3); }
+
+  /* Download note */
+  .download-note {
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.5;
+    padding: 0 8px;
+  }
+  .download-link-wrap { display: none; text-align: center; }
+  .download-link-wrap a {
+    color: var(--amber);
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* Exposure lock badge on viewfinder */
+  .exp-badge {
+    position: absolute;
+    bottom: 8px; right: 8px;
+    background: rgba(232,144,10,0.85);
+    color: #000;
+    border-radius: 6px;
+    padding: 3px 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-family: 'SF Mono', 'Courier New', monospace;
+    pointer-events: none;
+    display: none;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP SCREEN ═══════════════ -->
+<div id="setupScreen" class="screen active">
+  <div class="app-wordmark">
+    <div class="app-name">FrameLapse</div>
+    <div class="app-tagline">Precision interval capture</div>
+  </div>
+
+  <div class="setup-sections">
+
+    <div class="section">
+      <div class="section-label">Lens</div>
+      <div class="pill-row" id="setupLensRow">
+        <button class="pill" data-lens="ultrawide">0.5×</button>
+        <button class="pill active" data-lens="wide">1×</button>
+        <button class="pill" data-lens="tele">2×</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Capture interval</div>
+      <div class="interval-wrap">
+        <input type="number" id="intervalInput" inputmode="decimal"
+               placeholder="8.0" min="0.001" step="any" value="8.0">
+        <span class="interval-unit">sec</span>
+      </div>
+      <div class="precision-display" id="precisionDisplay"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Output video FPS</div>
+      <div class="fps-row" id="fpsRow">
+        <button class="fps-pill" data-fps="24">24 fps</button>
+        <button class="fps-pill active" data-fps="30">30 fps</button>
+        <button class="fps-pill" data-fps="60">60 fps</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Exposure</div>
+      <div class="toggle-row">
+        <div class="toggle-info">
+          <div class="toggle-title">Lock exposure</div>
+          <div class="toggle-sub">Freeze settings when recording starts — recommended for COLMAP</div>
+        </div>
+        <div class="toggle-switch" id="expToggle"></div>
+      </div>
+    </div>
+
+    <div class="section" style="border-bottom:none; padding-bottom:8px;">
+      <div class="error-text" id="setupError"></div>
+      <button class="start-btn" id="startBtn">Initialize Camera</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════ RECORD SCREEN ═══════════════ -->
+<div id="recordScreen" class="screen">
+  <div class="viewfinder-wrap">
+    <video id="viewfinder" autoplay playsinline muted></video>
+    <div class="hud-top">
+      <div class="hud-pill rec-pill" id="recPill" style="display:none;">
+        <div class="rec-dot"></div> REC
+      </div>
+      <div class="hud-pill" id="frameCountPill">0 frames</div>
+    </div>
+    <div class="exp-badge" id="expBadge">EXP LOCK</div>
+  </div>
+
+  <div class="rec-controls">
+    <div class="lens-bar" id="recLensBar">
+      <button class="lens-orb" data-lens="ultrawide">0.5×</button>
+      <button class="lens-orb active" data-lens="wide">1×</button>
+      <button class="lens-orb" data-lens="tele">2×</button>
+    </div>
+
+    <div class="next-frame-track">
+      <div class="next-frame-fill" id="nextFrameFill"></div>
+    </div>
+    <div class="next-frame-label" id="nextFrameLabel">—</div>
+
+    <div class="action-row">
+      <button class="action-side-btn" id="cancelBtn">✕ Cancel</button>
+      <button class="shutter-btn" id="shutterBtn"></button>
+      <button class="action-side-btn amber" id="exportNavBtn" style="display:none;">Export →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ EXPORT SCREEN ═══════════════ -->
+<div id="exportScreen" class="screen">
+  <div class="export-header">
+    <button class="export-back-btn" id="exportBackBtn">‹</button>
+    <div class="export-title">Export Session</div>
+  </div>
+
+  <div class="export-body">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statFrames">0</div>
+        <div class="stat-label">Frames</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statDuration">0s</div>
+        <div class="stat-label">Video length</div>
+      </div>
+    </div>
+
+    <div class="summary-card" id="summaryCard">
+      <div class="summary-row">
+        <span class="summary-key">Interval</span>
+        <span class="summary-val" id="sumInterval">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Lens</span>
+        <span class="summary-val" id="sumLens">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Resolution</span>
+        <span class="summary-val" id="sumRes">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Output FPS</span>
+        <span class="summary-val" id="sumFps">—</span>
+      </div>
+      <div class="summary-row">
+        <span class="summary-key">Exposure</span>
+        <span class="summary-val" id="sumExp">—</span>
+      </div>
+    </div>
+
+    <div class="export-progress-wrap" id="exportProgressWrap">
+      <div class="export-progress-track">
+        <div class="export-progress-fill" id="exportProgressFill"></div>
+      </div>
+      <div class="export-status-text" id="exportStatusText">—</div>
+    </div>
+
+    <div class="download-link-wrap" id="downloadLinkWrap">
+      <a id="downloadLink" href="#">⬇ Tap here if download did not start</a>
+    </div>
+
+    <div class="download-note" id="downloadNote" style="display:none;">
+      On iOS: video will open in a new tab — tap the share icon and choose <strong>Save to Photos</strong> or <strong>Save to Files</strong>.
+    </div>
+
+    <div class="btn-group">
+      <button class="full-btn primary" id="buildBtn">Build &amp; Download Video</button>
+      <button class="full-btn secondary" id="addMoreBtn">← Continue Capturing</button>
+      <button class="full-btn danger" id="discardBtn">Discard All Frames</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ HIDDEN CANVAS ═══════════════ -->
+<canvas id="captureCanvas" style="display:none;"></canvas>
+
+<script>
+'use strict';
+
+// ───────────────────────────────────────────────
+//  STATE
+// ───────────────────────────────────────────────
+const S = {
+  devices:      { ultrawide: null, wide: null, tele: null },
+  stream:       null,
+  currentLens:  'wide',
+  intervalSec:  8.0,     // exact float, never rounded
+  outputFps:    30,
+  fixedExp:     false,
+  recording:    false,
+  frames:       [],      // Blob[]
+  nextFrameAt:  0,       // performance.now() target
+  captureTimer: null,
+  rafId:        null,
+  vidW:         0,
+  vidH:         0,
+};
+
+// ───────────────────────────────────────────────
+//  DOM SHORTCUTS
+// ───────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const captureCanvas = $('captureCanvas');
+const captureCtx    = captureCanvas.getContext('2d');
+
+// ───────────────────────────────────────────────
+//  SCREEN MANAGER
+// ───────────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  $(id).classList.add('active');
+}
+
+// ───────────────────────────────────────────────
+//  SETUP SCREEN LOGIC
+// ───────────────────────────────────────────────
+let _setupLens = 'wide';
+let _setupFps  = 30;
+let _setupExp  = false;
+
+// Lens pills
+document.querySelectorAll('#setupLensRow .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#setupLensRow .pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _setupLens = btn.dataset.lens;
+  });
+});
+
+// FPS pills
+document.querySelectorAll('#fpsRow .fps-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#fpsRow .fps-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    _setupFps = parseInt(btn.dataset.fps);
+  });
+});
+
+// Exposure toggle
+$('expToggle').addEventListener('click', () => {
+  _setupExp = !_setupExp;
+  $('expToggle').classList.toggle('on', _setupExp);
+});
+
+// Interval precision feedback
+$('intervalInput').addEventListener('input', () => {
+  const raw  = $('intervalInput').value;
+  const val  = parseFloat(raw);
+  const disp = $('precisionDisplay');
+  if (raw === '' || isNaN(val) || val <= 0) {
+    disp.textContent = '';
+    disp.className   = 'precision-display';
+  } else {
+    // Show exact milliseconds with full precision
+    const ms = val * 1000;
+    disp.textContent = `= ${ms.toPrecision(10).replace(/\.?0+$/, '')} ms  (stored exactly as entered)`;
+    disp.className   = 'precision-display ok';
+  }
+});
+$('intervalInput').dispatchEvent(new Event('input'));
+
+// Start button
+$('startBtn').addEventListener('click', async () => {
+  const raw = $('intervalInput').value.trim();
+  const val = parseFloat(raw);
+
+  if (!raw || isNaN(val) || val <= 0) {
+    showSetupError('Enter a valid positive interval (e.g. 8.0 or 2.125)');
+    return;
+  }
+
+  S.intervalSec = val;        // full float precision
+  S.outputFps   = _setupFps;
+  S.fixedExp    = _setupExp;
+  S.currentLens = _setupLens;
+
+  $('startBtn').disabled    = true;
+  $('startBtn').textContent = 'Opening camera…';
+  $('setupError').textContent = '';
+
+  try {
+    await initCamera();
+  } catch(e) {
+    showSetupError('Camera error: ' + (e.message || e));
+    $('startBtn').disabled    = false;
+    $('startBtn').textContent = 'Initialize Camera';
+  }
+});
+
+function showSetupError(msg) {
+  $('setupError').textContent = msg;
+}
+
+// ───────────────────────────────────────────────
+//  CAMERA
+// ───────────────────────────────────────────────
+async function initCamera() {
+  // Get permission first via a brief generic stream
+  const perm = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: 'environment' }, audio: false
+  });
+  perm.getTracks().forEach(t => t.stop());
+
+  // Enumerate devices now that permission is granted
+  await enumerateDevices();
+
+  // Open the chosen lens
+  S.stream = await openLens(S.currentLens);
+  await attachStream(S.stream);
+
+  // Apply exposure lock if requested
+  if (S.fixedExp) await lockExposure();
+
+  // Sync lens buttons on record screen
+  syncRecLensBtns();
+  $('expBadge').style.display = S.fixedExp ? 'block' : 'none';
+
+  showScreen('recordScreen');
+  $('startBtn').disabled    = false;
+  $('startBtn').textContent = 'Initialize Camera';
+}
+
+async function enumerateDevices() {
+  const all   = await navigator.mediaDevices.enumerateDevices();
+  const cams  = all.filter(d => d.kind === 'videoinput');
+
+  S.devices = { ultrawide: null, wide: null, tele: null };
+
+  for (const d of cams) {
+    const lbl = d.label.toLowerCase();
+    if (lbl.includes('ultra') || lbl.includes('0.5')) {
+      S.devices.ultrawide = S.devices.ultrawide || d.deviceId;
+    } else if (lbl.includes('tele') || lbl.includes('2x') || lbl.includes('3x')) {
+      S.devices.tele = S.devices.tele || d.deviceId;
+    } else if (lbl.includes('back') || lbl.includes('rear') || lbl.includes('environment') || lbl.includes('1x')) {
+      S.devices.wide = S.devices.wide || d.deviceId;
+    }
+  }
+
+  // Fallback: if only one back camera found, assign it to wide
+  if (!S.devices.wide && cams.length > 0) {
+    S.devices.wide = cams[cams.length - 1].deviceId;
+  }
+}
+
+async function openLens(lens) {
+  const deviceId = S.devices[lens];
+  const constraints = {
+    video: {
+      // Request maximum resolution
+      width:  { ideal: 9999, min: 320 },
+      height: { ideal: 9999, min: 240 },
+    },
+    audio: false
+  };
+
+  if (deviceId) {
+    constraints.video.deviceId = { exact: deviceId };
+  } else {
+    constraints.video.facingMode = { ideal: 'environment' };
+  }
+
+  return navigator.mediaDevices.getUserMedia(constraints);
+}
+
+async function attachStream(stream) {
+  const vid = $('viewfinder');
+  vid.srcObject = stream;
+  await new Promise((res, rej) => {
+    vid.onloadedmetadata = res;
+    vid.onerror = rej;
+  });
+  vid.play();
+  S.vidW = vid.videoWidth;
+  S.vidH = vid.videoHeight;
+}
+
+async function lockExposure() {
+  if (!S.stream) return;
+  const track = S.stream.getVideoTracks()[0];
+  if (!track) return;
+  try {
+    const caps = typeof track.getCapabilities === 'function' ? track.getCapabilities() : {};
+    if (caps.exposureMode && caps.exposureMode.includes('manual')) {
+      await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
+    } else {
+      // Fallback: try anyway — some browsers accept without capability check
+      await track.applyConstraints({ advanced: [{ exposureMode: 'manual' }] });
+    }
+  } catch(e) {
+    console.warn('[FrameLapse] Exposure lock not supported on this device:', e.message);
+  }
+}
+
+async function switchLens(lens) {
+  if (lens === S.currentLens) return;
+  if (!S.devices[lens]) return;
+
+  // Stop existing stream
+  if (S.stream) S.stream.getTracks().forEach(t => t.stop());
+
+  try {
+    S.stream = await openLens(lens);
+    S.currentLens = lens;
+    await attachStream(S.stream);
+    if (S.fixedExp) await lockExposure();
+    syncRecLensBtns();
+  } catch(e) {
+    console.error('[FrameLapse] Lens switch failed:', e);
+  }
+}
+
+function syncRecLensBtns() {
+  document.querySelectorAll('#recLensBar .lens-orb').forEach(btn => {
+    const lens = btn.dataset.lens;
+    btn.disabled = !S.devices[lens];
+    btn.classList.toggle('active', lens === S.currentLens);
+  });
+}
+
+function stopCamera() {
+  if (S.stream) {
+    S.stream.getTracks().forEach(t => t.stop());
+    S.stream = null;
+  }
+  $('viewfinder').srcObject = null;
+}
+
+// ───────────────────────────────────────────────
+//  RECORD SCREEN EVENTS
+// ───────────────────────────────────────────────
+
+// Lens orbs
+document.querySelectorAll('#recLensBar .lens-orb').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (!S.stream || btn.disabled) return;
+    switchLens(btn.dataset.lens);
+  });
+});
+
+// Cancel
+$('cancelBtn').addEventListener('click', () => {
+  stopRecording();
+  stopCamera();
+  S.frames = [];
+  showScreen('setupScreen');
+});
+
+// Export navigation
+$('exportNavBtn').addEventListener('click', () => {
+  stopRecording();
+  openExportScreen();
+});
+
+// Shutter
+$('shutterBtn').addEventListener('click', () => {
+  if (!S.recording) {
+    startRecording();
+  } else {
+    stopRecording();
+    updateExportNavBtn();
+  }
+});
+
+function updateExportNavBtn() {
+  const show = !S.recording && S.frames.length > 0;
+  $('exportNavBtn').style.display = show ? 'block' : 'none';
+}
+
+// ───────────────────────────────────────────────
+//  CAPTURE
+// ───────────────────────────────────────────────
+function captureFrame() {
+  const vid = $('viewfinder');
+  const w = S.vidW || vid.videoWidth;
+  const h = S.vidH || vid.videoHeight;
+  if (w === 0 || h === 0) return;
+
+  captureCanvas.width  = w;
+  captureCanvas.height = h;
+  captureCtx.drawImage(vid, 0, 0, w, h);
+
+  captureCanvas.toBlob(blob => {
+    if (!blob) return;
+    S.frames.push(blob);
+    const n = S.frames.length;
+    $('frameCountPill').textContent = `${n} frame${n !== 1 ? 's' : ''}`;
+  }, 'image/jpeg', 0.98);   // 98% quality — lossless for COLMAP accuracy
+}
+
+// ───────────────────────────────────────────────
+//  RECORDING TIMING  (drift-corrected)
+// ───────────────────────────────────────────────
+function startRecording() {
+  S.recording = true;
+  $('shutterBtn').classList.add('recording');
+  $('recPill').style.display = 'flex';
+  $('exportNavBtn').style.display = 'none';
+  $('cancelBtn').style.display = 'none';
+
+  // Capture first frame immediately
+  captureFrame();
+
+  const intervalMs = S.intervalSec * 1000;   // exact, no rounding
+  S.nextFrameAt = performance.now() + intervalMs;
+
+  scheduleNextCapture();
+  animateNextFrameBar();
+}
+
+function scheduleNextCapture() {
+  if (!S.recording) return;
+
+  const now   = performance.now();
+  const delay = Math.max(0, S.nextFrameAt - now);
+
+  S.captureTimer = setTimeout(() => {
+    if (!S.recording) return;
+    captureFrame();
+    S.nextFrameAt += S.intervalSec * 1000;   // drift-corrected advancement
+    scheduleNextCapture();
+  }, delay);
+}
+
+function animateNextFrameBar() {
+  if (!S.recording) return;
+
+  const intervalMs  = S.intervalSec * 1000;
+  const now         = performance.now();
+  const elapsed     = intervalMs - (S.nextFrameAt - now);
+  const pct         = Math.max(0, Math.min(100, (elapsed / intervalMs) * 100));
+  const remaining   = Math.max(0, (S.nextFrameAt - now) / 1000);
+
+  $('nextFrameFill').style.width = pct + '%';
+  $('nextFrameLabel').textContent = `Next frame in ${remaining.toFixed(2)}s`;
+
+  S.rafId = requestAnimationFrame(animateNextFrameBar);
+}
+
+function stopRecording() {
+  if (!S.recording) return;
+  S.recording = false;
+
+  if (S.captureTimer) { clearTimeout(S.captureTimer); S.captureTimer = null; }
+  if (S.rafId)        { cancelAnimationFrame(S.rafId);  S.rafId        = null; }
+
+  $('shutterBtn').classList.remove('recording');
+  $('recPill').style.display  = 'none';
+  $('cancelBtn').style.display = 'block';
+  $('nextFrameFill').style.width = '0%';
+  $('nextFrameLabel').textContent = '—';
+
+  updateExportNavBtn();
+}
+
+// ───────────────────────────────────────────────
+//  EXPORT SCREEN
+// ───────────────────────────────────────────────
+function openExportScreen() {
+  const n     = S.frames.length;
+  const dur   = (n / S.outputFps).toFixed(1);
+  const lens  = { ultrawide:'0.5× Ultra Wide', wide:'1× Wide', tele:'2× Telephoto' }[S.currentLens];
+
+  $('statFrames').textContent  = n;
+  $('statDuration').textContent = dur + 's';
+  $('sumInterval').textContent = S.intervalSec + ' s';
+  $('sumLens').textContent     = lens;
+  $('sumRes').textContent      = S.vidW ? `${S.vidW}×${S.vidH}` : '—';
+  $('sumFps').textContent      = S.outputFps + ' fps';
+  $('sumExp').textContent      = S.fixedExp ? 'Locked' : 'Auto';
+
+  $('exportProgressWrap').style.display = 'none';
+  $('downloadLinkWrap').style.display   = 'none';
+  $('downloadNote').style.display       = 'none';
+  $('exportProgressFill').style.width   = '0%';
+  $('exportStatusText').textContent     = '';
+  $('buildBtn').disabled   = false;
+  $('addMoreBtn').disabled = false;
+  $('discardBtn').disabled = false;
+  $('buildBtn').textContent = 'Build & Download Video';
+
+  showScreen('exportScreen');
+}
+
+$('exportBackBtn').addEventListener('click', () => showScreen('recordScreen'));
+$('addMoreBtn').addEventListener('click',    () => showScreen('recordScreen'));
+
+$('discardBtn').addEventListener('click', () => {
+  S.frames = [];
+  $('frameCountPill').textContent = '0 frames';
+  stopCamera();
+  showScreen('setupScreen');
+  $('startBtn').disabled    = false;
+  $('startBtn').textContent = 'Initialize Camera';
+});
+
+$('buildBtn').addEventListener('click', buildVideo);
+
+// ───────────────────────────────────────────────
+//  VIDEO ASSEMBLY
+// ───────────────────────────────────────────────
+async function buildVideo() {
+  if (S.frames.length === 0) {
+    alert('No frames captured yet.');
+    return;
+  }
+
+  $('buildBtn').disabled   = true;
+  $('addMoreBtn').disabled = true;
+  $('discardBtn').disabled = true;
+  $('exportProgressWrap').style.display = 'block';
+  $('downloadLinkWrap').style.display   = 'none';
+  $('downloadNote').style.display       = 'none';
+
+  const setStatus = (txt, pct) => {
+    $('exportStatusText').textContent      = txt;
+    $('exportProgressFill').style.width    = (pct ?? 0) + '%';
+  };
+
+  try {
+    // ── Determine video dimensions from first frame
+    setStatus('Loading first frame…', 2);
+    const firstBmp = await createImageBitmap(S.frames[0]);
+    const W = firstBmp.width;
+    const H = firstBmp.height;
+    firstBmp.close();
+
+    // ── Build rendering canvas
+    const canvas = document.createElement('canvas');
+    canvas.width  = W;
+    canvas.height = H;
+    const ctx     = canvas.getContext('2d');
+
+    // ── Pick mime type (MP4 preferred on iOS 17+)
+    const mimeType = pickMime();
+    setStatus(`Using codec: ${mimeType}`, 4);
+
+    // ── Set up MediaRecorder on canvas stream
+    const fps    = S.outputFps;
+    const stream = canvas.captureStream(fps);
+
+    let recOpts = { mimeType };
+    try { recOpts.videoBitsPerSecond = 25_000_000; } catch(_) {}
+
+    const recorder = new MediaRecorder(stream, recOpts);
+    const chunks   = [];
+
+    recorder.ondataavailable = e => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+    // ── Render each frame into the canvas while recording
+    const videoBlob = await new Promise((resolve, reject) => {
+      recorder.onstop  = () => resolve(new Blob(chunks, { type: mimeType }));
+      recorder.onerror = e  => reject(e.error || new Error('MediaRecorder error'));
+
+      recorder.start(100); // collect data every 100ms
+
+      (async () => {
+        const frameDur = Math.ceil(1000 / fps) + 8; // a bit of slack per frame
+
+        for (let i = 0; i < S.frames.length; i++) {
+          const pct = 5 + Math.round((i / S.frames.length) * 90);
+          setStatus(`Rendering frame ${i + 1} / ${S.frames.length}`, pct);
+
+          const bmp = await createImageBitmap(S.frames[i]);
+          ctx.drawImage(bmp, 0, 0, W, H);
+          bmp.close();
+
+          await sleep(frameDur);
+        }
+
+        recorder.stop();
+        setStatus('Finalizing…', 96);
+      })().catch(reject);
+    });
+
+    setStatus('Done! Starting download…', 100);
+
+    // ── Trigger download
+    const ext = mimeType.includes('mp4') ? 'mp4' : 'webm';
+    const url = URL.createObjectURL(videoBlob);
+    const ts  = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+    const filename = `framelapse_${ts}.${ext}`;
+
+    const a  = document.createElement('a');
+    a.href   = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    // iOS fallback: show a manual link
+    $('downloadLink').href = url;
+    $('downloadLink').textContent = `⬇ ${filename}`;
+    $('downloadLinkWrap').style.display = 'block';
+    $('downloadNote').style.display     = 'block';
+
+    $('buildBtn').textContent = '✓ Video Built';
+    setTimeout(() => URL.revokeObjectURL(url), 120_000);
+
+  } catch(err) {
+    setStatus('❌ Export failed: ' + (err.message || err), 0);
+    console.error('[FrameLapse] buildVideo error:', err);
+  } finally {
+    $('buildBtn').disabled   = false;
+    $('addMoreBtn').disabled = false;
+    $('discardBtn').disabled = false;
+  }
+}
+
+function pickMime() {
+  const candidates = [
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4',
+    'video/webm;codecs=vp9',
+    'video/webm;codecs=vp8',
+    'video/webm',
+  ];
+  for (const m of candidates) {
+    if (MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return ''; // browser picks
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+</script>
+</body>
+</html>
