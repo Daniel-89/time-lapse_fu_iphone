@@ -1,4 +1,6 @@
-<html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -198,7 +200,7 @@
 <body>
 
 <!-- ── Init overlay (spinner or resume prompt) ── -->
-<div id="initOverlay" class="hidden">
+<div id="initOverlay">
   <div id="overlaySpinner">
     <div class="spinner" style="margin:0 auto 12px;"></div>
     <div class="overlay-label">Initializing storage…</div>
@@ -208,13 +210,13 @@
     <div class="overlay-sub" id="resumeSubtext"></div>
     <div class="overlay-row">
       <button class="ov-btn secondary" id="resumeDiscard">Start fresh</button>
-      <button class="ov-btn primary" id="resumeLoad">Resume</button>
+      <button class="ov-btn primary"   id="resumeLoad">Resume</button>
     </div>
   </div>
 </div>
 
 <!-- ═══════════ SETUP ═══════════ -->
-<div id="setupScreen" class="screen active">
+<div id="setupScreen" class="screen">
   <div class="app-wordmark">
     <div class="app-name">FrameLapse</div>
     <div class="app-tagline">Precision interval capture</div>
@@ -233,11 +235,12 @@
     <div class="section">
       <div class="section-label">Capture interval</div>
       <div class="interval-wrap">
-        <input type="number" id="intervalInput" inputmode="decimal" placeholder="8.0" min="0.001" step="any" value="8.0">
+        <input type="number" id="intervalInput" inputmode="decimal"
+               placeholder="8.0" min="0.001" step="any" value="8.0">
         <span class="interval-unit">sec</span>
       </div>
-      <div class="precision-display ok" id="precisionDisplay">= 8000 ms  (stored exactly as entered)</div>
-      <div class="storage-estimate show" id="storageEstimate"><strong>30 min session</strong>: ~225 frames · ~1.1 GB on flash<br>RAM usage stays flat — frames go directly to device storage.</div>
+      <div class="precision-display" id="precisionDisplay"></div>
+      <div class="storage-estimate"  id="storageEstimate"></div>
     </div>
 
     <div class="section">
@@ -248,19 +251,21 @@
         <button class="fps-pill" data-fps="60">60 fps</button>
       </div>
     </div>
-    
+
+    <div class="section">
+      <div class="section-label">Camera feed rate</div>
+      <div class="fps-row" id="camFpsRow">
+        <button class="fps-pill active" data-cfps="30">30 fps</button>
+        <button class="fps-pill"        data-cfps="60">60 fps ✦</button>
+      </div>
+      <div class="shutter-note" style="margin-top:10px; font-size:11px; color:var(--muted); font-family:'SF Mono','Courier New',monospace; line-height:1.6;">
+        60 fps forces the camera's auto-exposure to use a shorter shutter (~1/60–1/120 s vs ~1/30–1/60 s at 30 fps), reducing motion blur without needing explicit shutter control. Requires good light.
+      </div>
+    </div>
+
     <div class="section" style="border-bottom:none; padding-bottom:8px;">
       <div class="error-text" id="setupError"></div>
       <button class="start-btn" id="startBtn">Initialize Camera</button>
-    </div>
-
-    <div class="section">
-      <div class="section-label">Exposure &amp; shutter</div>
-      <div class="warn-banner">
-        <strong>⚠ iOS Safari limitation</strong>
-        Manual exposure lock and shutter speed require native AVFoundation access, which iOS Safari does not expose to web apps. These constraints are silently ignored by WebKit.<br><br>
-        <strong>Workaround:</strong> In the native Camera app, tap and <em>hold</em> on your subject to lock AE/AF, then switch to FrameLapse. The lock sometimes persists briefly during the camera handoff.
-      </div>
     </div>
 
     <div class="section">
@@ -271,15 +276,13 @@
       </div>
     </div>
 
-
-
   </div>
 </div>
 
 <!-- ═══════════ RECORD ═══════════ -->
 <div id="recordScreen" class="screen">
   <div class="viewfinder-wrap">
-    <video id="viewfinder" autoplay="" playsinline="" muted=""></video>
+    <video id="viewfinder" autoplay playsinline muted></video>
 
     <!-- Previous-frame PiP -->
     <div id="pipWrap">
@@ -295,7 +298,10 @@
       <div class="hud-pill pause-pill" id="pausePill" style="display:none;">
         <div class="pause-dot"></div> PAUSED
       </div>
-      <div class="hud-pill" id="frameCountPill">0 frames</div>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
+        <div class="hud-pill" id="frameCountPill">0 frames</div>
+        <div class="hud-pill" id="camFpsPill" style="font-size:11px; padding:4px 10px;"></div>
+      </div>
     </div>
   </div>
 
@@ -369,9 +375,9 @@
     </div>
 
     <div class="btn-group">
-      <button class="full-btn primary" id="buildBtn">Build &amp; Download Video</button>
+      <button class="full-btn primary"   id="buildBtn">Build &amp; Download Video</button>
       <button class="full-btn secondary" id="addMoreBtn">← Continue Capturing</button>
-      <button class="full-btn danger" id="exportDiscardBtn">Discard frames &amp; reset</button>
+      <button class="full-btn danger"    id="exportDiscardBtn">Discard frames &amp; reset</button>
     </div>
   </div>
 </div>
@@ -475,6 +481,7 @@ const S = {
   // session — persisted to IDB meta
   intervalSec:  8.0,   // exact float, never rounded
   outputFps:    30,
+  camFps:       30,    // camera feed framerate (30 or 60)
   sessionStart: null,  // performance.now() value when frame 1 was captured
   frameCount:   0,     // total frames successfully written to IDB
 
@@ -511,10 +518,12 @@ function showScreen(id) {
   let savedCount    = 0;
   let savedInterval = null;
   let savedFps      = null;
+  let savedCamFps   = null;
   try {
     savedCount    = await idbCountFrames();
     savedInterval = await idbGetMeta('intervalSec');
     savedFps      = await idbGetMeta('outputFps');
+    savedCamFps   = await idbGetMeta('camFps');
   } catch(_) {}
 
   const overlay = $('initOverlay');
@@ -537,6 +546,7 @@ function showScreen(id) {
       // Restore session state
       S.intervalSec  = parseFloat(savedInterval);
       S.outputFps    = parseInt(savedFps) || 30;
+      S.camFps       = parseInt(savedCamFps) || 30;
       S.frameCount   = savedCount;
       S.hasSession   = true;
       // sessionStart is reconstructed relative to now — we don't know
@@ -563,7 +573,7 @@ function showScreen(id) {
 // ═══════════════════════════════════════════════════════════
 //  SETUP UI
 // ═══════════════════════════════════════════════════════════
-let _lens = 'wide', _fps = 30;
+let _lens = 'wide', _fps = 30, _camFps = 30;
 
 document.querySelectorAll('#setupLensRow .pill').forEach(b =>
   b.addEventListener('click', () => {
@@ -597,6 +607,13 @@ document.querySelectorAll('#fpsRow .fps-pill').forEach(b =>
   })
 );
 
+document.querySelectorAll('#camFpsRow .fps-pill').forEach(b =>
+  b.addEventListener('click', () => {
+    document.querySelectorAll('#camFpsRow .fps-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active'); _camFps = parseInt(b.dataset.cfps);
+  })
+);
+
 $('startBtn').addEventListener('click', async () => {
   const raw = $('intervalInput').value.trim(), val = parseFloat(raw);
   if (!raw || isNaN(val) || val <= 0) {
@@ -604,6 +621,7 @@ $('startBtn').addEventListener('click', async () => {
   }
   S.intervalSec = val;
   S.outputFps   = _fps;
+  S.camFps      = _camFps;
   S.currentLens = _lens;
   S.frameCount  = 0;
   S.hasSession  = false;
@@ -615,6 +633,7 @@ $('startBtn').addEventListener('click', async () => {
   try {
     await idbSetMeta('intervalSec', S.intervalSec);
     await idbSetMeta('outputFps',   S.outputFps);
+    await idbSetMeta('camFps',      S.camFps);
     await initCamera();
   } catch(e) {
     $('setupError').textContent = 'Camera error: ' + (e.message || e);
@@ -673,7 +692,14 @@ async function enumerateDevicesOrSkip() {
 
 async function openLens(lens) {
   const id  = S.devices[lens];
-  const con = { video:{ width:{ ideal:9999 }, height:{ ideal:9999 } }, audio:false };
+  const con = {
+    video: {
+      width:     { ideal: 9999 },
+      height:    { ideal: 9999 },
+      frameRate: { ideal: S.camFps, min: 24 },
+    },
+    audio: false,
+  };
   if (id) con.video.deviceId  = { exact: id };
   else    con.video.facingMode = { ideal: 'environment' };
   return navigator.mediaDevices.getUserMedia(con);
@@ -686,6 +712,18 @@ async function attachStream(stream) {
   vid.play();
   S.vidW = vid.videoWidth;
   S.vidH = vid.videoHeight;
+
+  // Read the actual framerate the camera granted (may differ from ideal)
+  const track    = stream.getVideoTracks()[0];
+  const settings = track?.getSettings?.() ?? {};
+  const actualFps = settings.frameRate ? Math.round(settings.frameRate) : S.camFps;
+  const pill = $('camFpsPill');
+  pill.textContent = `${actualFps} fps feed`;
+  pill.style.display = 'block';
+  // Tint amber if we got 60, muted if we only got 30 when 60 was requested
+  pill.style.color = (S.camFps === 60 && actualFps >= 55)
+    ? 'var(--amber)'
+    : 'rgba(255,255,255,0.5)';
 }
 
 async function switchLens(lens) {
@@ -1062,6 +1100,5 @@ function pickMime() {
   return '';
 }
 </script>
-
-
-</body></html>
+</body>
+</html>
