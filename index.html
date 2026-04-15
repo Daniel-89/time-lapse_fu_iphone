@@ -692,14 +692,25 @@ async function enumerateDevicesOrSkip() {
 
 async function openLens(lens) {
   const id  = S.devices[lens];
-  const con = {
-    video: {
-      width:     { ideal: 9999 },
-      height:    { ideal: 9999 },
-      frameRate: { ideal: S.camFps, min: 24 },
-    },
-    audio: false,
-  };
+  if (S.camFps = 60) {
+    const con = {
+      video: {
+        width:     { ideal: 1008 },
+        height:    { ideal: 1344 },
+        frameRate: { ideal: S.camFps, min: 24 },
+      },
+      audio: false,
+    };
+  } else {
+        const con = {
+      video: {
+        width:     { ideal: 9999 },
+        height:    { ideal: 9999 },
+        frameRate: { ideal: S.camFps, min: 24 },
+      },
+      audio: false,
+    };
+  }
   if (id) con.video.deviceId  = { exact: id };
   else    con.video.facingMode = { ideal: 'environment' };
   return navigator.mediaDevices.getUserMedia(con);
