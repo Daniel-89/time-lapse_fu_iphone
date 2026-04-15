@@ -15,116 +15,164 @@
     --red:     #ff3830;
     --green:   #34c759;
     --yellow:  #ffd60a;
+    --blue:    #0a84ff;
     --text:    #f0f0f0;
     --muted:   #666672;
     --sub:     #999aaa;
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bot: env(safe-area-inset-bottom, 0px);
+    --safe-top:  env(safe-area-inset-top, 0px);
+    --safe-bot:  env(safe-area-inset-bottom, 0px);
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html, body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; overflow:hidden; user-select:none; }
+  * { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+  html,body { width:100%; height:100%; background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif; overflow:hidden; user-select:none; }
 
-  /* SCREENS */
+  /* ── SCREENS ─────────────────────────────────────────────── */
   .screen { position:absolute; inset:0; display:flex; flex-direction:column; opacity:0; pointer-events:none; transition:opacity .25s ease; }
   .screen.active { opacity:1; pointer-events:all; }
 
-  /* SETUP */
+  /* ── OVERLAY (spinner / resume prompt) ───────────────────── */
+  #initOverlay {
+    position:fixed; inset:0; background:rgba(8,8,8,.97);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:16px; z-index:999; padding:32px;
+  }
+  #initOverlay.hidden { display:none; }
+  .spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--amber); border-radius:50%; animation:spin .8s linear infinite; }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .overlay-label { font-size:14px; color:var(--muted); font-family:'SF Mono','Courier New',monospace; text-align:center; }
+  .overlay-title { font-size:20px; font-weight:700; text-align:center; }
+  .overlay-sub   { font-size:13px; color:var(--sub); text-align:center; line-height:1.6; }
+  .overlay-row   { display:flex; gap:12px; width:100%; max-width:320px; }
+  .ov-btn {
+    flex:1; padding:14px; border-radius:14px; font-size:15px; font-weight:700;
+    border:none; cursor:pointer;
+  }
+  .ov-btn.primary   { background:var(--amber); color:#000; }
+  .ov-btn.secondary { background:var(--bg3); color:var(--text); border:1px solid var(--border); }
+
+  /* ── SETUP ───────────────────────────────────────────────── */
   #setupScreen { padding-top:calc(var(--safe-top) + 20px); padding-bottom:calc(var(--safe-bot) + 16px); overflow-y:auto; }
   .app-wordmark { padding:0 24px 24px; border-bottom:1px solid var(--border); }
-  .app-name { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--amber); font-weight:600; font-family:'SF Mono','Courier New',monospace; }
-  .app-tagline { font-size:22px; font-weight:700; margin-top:4px; letter-spacing:-.5px; }
+  .app-name     { font-size:11px; letter-spacing:.25em; text-transform:uppercase; color:var(--amber); font-weight:600; font-family:'SF Mono','Courier New',monospace; }
+  .app-tagline  { font-size:22px; font-weight:700; margin-top:4px; letter-spacing:-.5px; }
   .setup-sections { padding:0 24px; }
   .section { padding:20px 0; border-bottom:1px solid var(--border); }
   .section:last-of-type { border-bottom:none; }
   .section-label { font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--muted); font-weight:600; margin-bottom:14px; font-family:'SF Mono','Courier New',monospace; }
 
-  /* Pills */
   .pill-row { display:flex; gap:8px; }
   .pill { flex:1; padding:10px 0; border-radius:10px; border:1px solid var(--border); background:var(--bg2); color:var(--sub); font-size:15px; font-weight:700; text-align:center; cursor:pointer; transition:all .18s; font-family:'SF Mono','Courier New',monospace; }
-  .pill.active { background:var(--amber); border-color:var(--amber); color:#000; }
+  .pill.active  { background:var(--amber); border-color:var(--amber); color:#000; }
   .pill:disabled { opacity:.28; cursor:not-allowed; }
 
-  /* Interval */
   .interval-wrap { display:flex; align-items:center; background:var(--bg2); border:1px solid var(--border); border-radius:12px; overflow:hidden; transition:border-color .15s; }
   .interval-wrap:focus-within { border-color:var(--amber); }
   #intervalInput { flex:1; background:transparent; border:none; color:var(--text); font-size:28px; font-weight:300; font-family:'SF Mono','Courier New',monospace; padding:14px 16px; outline:none; min-width:0; letter-spacing:-.5px; }
   #intervalInput::placeholder { color:var(--muted); }
   .interval-unit { font-size:14px; color:var(--muted); padding:0 16px 0 0; font-family:'SF Mono','Courier New',monospace; }
+
   .precision-display { margin-top:8px; font-size:11px; color:var(--muted); font-family:'SF Mono','Courier New',monospace; min-height:16px; }
   .precision-display.ok { color:var(--amber); }
 
-  /* Storage estimate */
   .storage-estimate { margin-top:10px; background:var(--bg3); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-size:12px; color:var(--sub); font-family:'SF Mono','Courier New',monospace; line-height:1.7; display:none; }
   .storage-estimate.show { display:block; }
   .storage-estimate strong { color:var(--amber); font-weight:700; }
 
-  /* Warning banner */
   .warn-banner { background:rgba(255,214,10,.08); border:1px solid rgba(255,214,10,.25); border-radius:12px; padding:13px 14px; font-size:12px; color:var(--yellow); line-height:1.6; }
   .warn-banner strong { font-weight:700; display:block; margin-bottom:3px; }
 
-  /* FPS */
   .fps-row { display:flex; gap:8px; }
   .fps-pill { flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--border); background:var(--bg2); color:var(--sub); font-size:14px; font-weight:600; text-align:center; cursor:pointer; transition:all .18s; font-family:'SF Mono','Courier New',monospace; }
   .fps-pill.active { background:var(--bg3); border-color:var(--amber); color:var(--amber); }
 
-  /* Start */
   .start-btn { width:100%; padding:17px; border-radius:14px; background:var(--amber); color:#000; font-size:16px; font-weight:700; border:none; cursor:pointer; margin-top:4px; letter-spacing:.02em; transition:opacity .15s; }
   .start-btn:disabled { opacity:.4; }
-  .start-btn:active { opacity:.8; }
+  .start-btn:active   { opacity:.8; }
   .error-text { font-size:13px; color:var(--red); text-align:center; min-height:18px; margin-top:6px; }
 
-  /* DB init overlay */
-  #dbOverlay { position:fixed; inset:0; background:rgba(8,8,8,.95); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px; z-index:999; }
-  #dbOverlay.hidden { display:none; }
-  .db-spinner { width:36px; height:36px; border:3px solid var(--border); border-top-color:var(--amber); border-radius:50%; animation:spin .8s linear infinite; }
-  @keyframes spin { to{transform:rotate(360deg)} }
-  .db-label { font-size:14px; color:var(--muted); font-family:'SF Mono','Courier New',monospace; }
+  /* IDB persistence notice */
+  .persist-notice { background:rgba(10,132,255,.07); border:1px solid rgba(10,132,255,.25); border-radius:12px; padding:12px 14px; font-size:12px; color:var(--blue); line-height:1.6; }
+  .persist-notice strong { font-weight:700; display:block; margin-bottom:2px; }
 
-  /* RECORD */
+  /* ── RECORD ──────────────────────────────────────────────── */
   #recordScreen { background:#000; }
   .viewfinder-wrap { flex:1; position:relative; overflow:hidden; background:#000; }
   #viewfinder { width:100%; height:100%; object-fit:cover; }
 
+  /* PiP — previous frame reference */
+  #pipWrap {
+    position:absolute;
+    bottom:12px; right:12px;
+    width:28%;
+    aspect-ratio:4/3;
+    border-radius:10px;
+    overflow:hidden;
+    border:2px solid rgba(255,255,255,.35);
+    background:#000;
+    display:none;   /* shown once first frame is captured */
+    box-shadow:0 4px 20px rgba(0,0,0,.7);
+  }
+  #pipImg { width:100%; height:100%; object-fit:cover; }
+  #pipLabel {
+    position:absolute; bottom:0; left:0; right:0;
+    background:rgba(0,0,0,.6);
+    font-size:9px; font-weight:700; letter-spacing:.08em;
+    color:rgba(255,255,255,.7);
+    text-align:center; padding:3px 0;
+    font-family:'SF Mono','Courier New',monospace;
+  }
+
+  /* HUD */
   .hud-top { position:absolute; top:calc(var(--safe-top) + 12px); left:16px; right:16px; display:flex; justify-content:space-between; align-items:flex-start; pointer-events:none; }
   .hud-pill { background:rgba(0,0,0,.55); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.12); border-radius:20px; padding:6px 12px; font-size:12px; font-weight:600; color:#fff; font-family:'SF Mono','Courier New',monospace; }
-  .hud-pill.rec-pill { color:var(--red); display:flex; align-items:center; gap:6px; }
-  .rec-dot { width:7px; height:7px; border-radius:50%; background:var(--red); animation:blink 1s infinite; }
+  .hud-pill.rec-pill   { color:var(--red);   display:flex; align-items:center; gap:6px; }
+  .hud-pill.pause-pill { color:var(--amber); display:flex; align-items:center; gap:6px; }
+  .rec-dot   { width:7px; height:7px; border-radius:50%; background:var(--red);   animation:blink 1s infinite; }
+  .pause-dot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
+  /* Record controls */
   .rec-controls { background:rgba(8,8,8,.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); padding:14px 20px calc(var(--safe-bot) + 16px); border-top:1px solid var(--border); }
+
   .lens-bar { display:flex; justify-content:center; gap:10px; margin-bottom:14px; }
   .lens-orb { width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.15); color:#fff; font-size:12px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .18s; font-family:'SF Mono','Courier New',monospace; }
-  .lens-orb.active { background:rgba(232,144,10,.18); border-color:var(--amber); color:var(--amber); }
+  .lens-orb.active   { background:rgba(232,144,10,.18); border-color:var(--amber); color:var(--amber); }
   .lens-orb:disabled { opacity:.25; cursor:not-allowed; }
 
   .next-frame-track { height:3px; background:var(--border); border-radius:2px; overflow:hidden; margin-bottom:8px; }
   .next-frame-fill  { height:100%; background:var(--amber); width:0%; border-radius:2px; }
+  /* Paused: bar pulses dimly */
+  .next-frame-fill.paused { background:var(--muted); animation:dim-pulse 1.5s ease-in-out infinite; }
+  @keyframes dim-pulse { 0%,100%{opacity:.4} 50%{opacity:.9} }
+
   .next-frame-label { font-size:11px; color:var(--muted); font-family:'SF Mono','Courier New',monospace; text-align:center; margin-bottom:16px; letter-spacing:.04em; }
 
-  .action-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-  .action-side-btn { flex:1; padding:12px 0; border-radius:12px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:13px; font-weight:600; cursor:pointer; text-align:center; transition:all .15s; }
+  .action-row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .action-side-btn { flex:1; padding:11px 0; border-radius:12px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-size:11px; font-weight:600; cursor:pointer; text-align:center; transition:all .15s; line-height:1.3; }
   .action-side-btn:active { opacity:.7; }
-  .action-side-btn.amber { background:rgba(232,144,10,.12); border-color:rgba(232,144,10,.4); color:var(--amber); }
+  .action-side-btn.amber  { background:rgba(232,144,10,.12); border-color:rgba(232,144,10,.4); color:var(--amber); }
+  .action-side-btn.danger { background:rgba(255,56,48,.1); border-color:rgba(255,56,48,.3); color:var(--red); }
 
-  .shutter-btn { width:72px; height:72px; border-radius:50%; background:#fff; border:5px solid rgba(255,255,255,.25); cursor:pointer; position:relative; flex-shrink:0; transition:transform .1s,background .2s; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
+  .shutter-btn { width:68px; height:68px; border-radius:50%; background:#fff; border:5px solid rgba(255,255,255,.25); cursor:pointer; position:relative; flex-shrink:0; transition:transform .1s,background .2s; box-shadow:0 0 0 2px rgba(255,255,255,.5); }
   .shutter-btn:active { transform:scale(.92); }
   .shutter-btn.recording { background:var(--red); box-shadow:0 0 0 2px rgba(255,56,48,.5); }
-  .shutter-btn.recording::after { content:''; position:absolute; width:22px; height:22px; background:#fff; border-radius:5px; top:50%; left:50%; transform:translate(-50%,-50%); }
+  .shutter-btn.recording::after { content:''; position:absolute; width:20px; height:20px; background:#fff; border-radius:4px; top:50%; left:50%; transform:translate(-50%,-50%); }
+  /* Paused state: amber ring */
+  .shutter-btn.paused { background:#fff; box-shadow:0 0 0 3px var(--amber); }
 
-  /* EXPORT */
+  /* ── EXPORT ──────────────────────────────────────────────── */
   #exportScreen { padding-top:calc(var(--safe-top)); padding-bottom:calc(var(--safe-bot)); }
   .export-header { padding:20px 24px 16px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:12px; }
   .export-back-btn { width:36px; height:36px; background:var(--bg2); border:1px solid var(--border); border-radius:50%; color:var(--text); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
   .export-title { font-size:18px; font-weight:700; }
-  .export-body { flex:1; padding:24px; display:flex; flex-direction:column; gap:18px; overflow-y:auto; }
+  .export-body  { flex:1; padding:24px; display:flex; flex-direction:column; gap:18px; overflow-y:auto; }
 
   .stats-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .stat-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; }
-  .stat-value { font-size:32px; font-weight:700; font-family:'SF Mono','Courier New',monospace; color:var(--amber); line-height:1; margin-bottom:4px; }
-  .stat-label { font-size:11px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; }
+  .stat-card   { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; }
+  .stat-value  { font-size:32px; font-weight:700; font-family:'SF Mono','Courier New',monospace; color:var(--amber); line-height:1; margin-bottom:4px; }
+  .stat-label  { font-size:11px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; }
 
   .summary-card { background:var(--bg2); border:1px solid var(--border); border-radius:14px; padding:16px; }
-  .summary-row { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px; }
+  .summary-row  { display:flex; justify-content:space-between; align-items:center; padding:5px 0; font-size:13px; }
   .summary-row + .summary-row { border-top:1px solid var(--border); }
   .summary-key { color:var(--muted); }
   .summary-val { font-family:'SF Mono','Courier New',monospace; color:var(--text); font-size:13px; }
@@ -149,10 +197,20 @@
 </head>
 <body>
 
-<!-- DB init overlay -->
-<div id="dbOverlay" class="hidden">
-  <div class="db-spinner"></div>
-  <div class="db-label">Initializing storage…</div>
+<!-- ── Init overlay (spinner or resume prompt) ── -->
+<div id="initOverlay" class="hidden">
+  <div id="overlaySpinner">
+    <div class="spinner" style="margin:0 auto 12px;"></div>
+    <div class="overlay-label">Initializing storage…</div>
+  </div>
+  <div id="overlayResume" style="display:none; flex-direction:column; align-items:center; gap:16px; width:100%; max-width:320px;">
+    <div class="overlay-title">Session found</div>
+    <div class="overlay-sub" id="resumeSubtext"></div>
+    <div class="overlay-row">
+      <button class="ov-btn secondary" id="resumeDiscard">Start fresh</button>
+      <button class="ov-btn primary" id="resumeLoad">Resume</button>
+    </div>
+  </div>
 </div>
 
 <!-- ═══════════ SETUP ═══════════ -->
@@ -161,7 +219,6 @@
     <div class="app-name">FrameLapse</div>
     <div class="app-tagline">Precision interval capture</div>
   </div>
-
   <div class="setup-sections">
 
     <div class="section">
@@ -180,10 +237,7 @@
         <span class="interval-unit">sec</span>
       </div>
       <div class="precision-display ok" id="precisionDisplay">= 8000 ms  (stored exactly as entered)</div>
-      <div class="storage-estimate show" id="storageEstimate">
-    <strong>30 min session</strong>: ~225 frames · ~1.1 GB on-device storage<br>
-    Frames are saved to device storage (IndexedDB), not RAM — memory usage stays flat.
-  </div>
+      <div class="storage-estimate show" id="storageEstimate"><strong>30 min session</strong>: ~225 frames · ~1.1 GB on flash<br>RAM usage stays flat — frames go directly to device storage.</div>
     </div>
 
     <div class="section">
@@ -195,21 +249,27 @@
       </div>
     </div>
 
-    <!-- iOS camera controls limitation notice -->
-    <div class="section" style="border-bottom:none; padding-bottom:8px;">
-      <div class="error-text" id="setupError"></div>
-      <button class="start-btn" id="startBtn">Initialize Camera</button>
-    </div>
     <div class="section">
       <div class="section-label">Exposure &amp; shutter</div>
       <div class="warn-banner">
         <strong>⚠ iOS Safari limitation</strong>
-        Manual exposure lock and custom shutter speed require native AVFoundation access, which iOS Safari does not expose to web apps. These controls are silently ignored by WebKit regardless of what the app sends.<br><br>
-        <strong>Workaround for consistent exposure:</strong> Before opening FrameLapse, open the native Camera app, tap and <em>hold</em> on your subject to lock AE/AF, then switch to FrameLapse. On many iOS versions the locked exposure persists briefly while the camera resource is handed off. Results may vary.
+        Manual exposure lock and shutter speed require native AVFoundation access, which iOS Safari does not expose to web apps. These constraints are silently ignored by WebKit.<br><br>
+        <strong>Workaround:</strong> In the native Camera app, tap and <em>hold</em> on your subject to lock AE/AF, then switch to FrameLapse. The lock sometimes persists briefly during the camera handoff.
       </div>
     </div>
 
+    <div class="section">
+      <div class="section-label">Storage</div>
+      <div class="persist-notice">
+        <strong>📦 Frames survive app close</strong>
+        Frames are saved to on-device storage (IndexedDB) and persist if Safari is closed or the phone is locked. They are only removed when you tap "Discard frames &amp; reset". You will be offered to resume if a previous session is detected on launch.
+      </div>
+    </div>
 
+    <div class="section" style="border-bottom:none; padding-bottom:8px;">
+      <div class="error-text" id="setupError"></div>
+      <button class="start-btn" id="startBtn">Initialize Camera</button>
+    </div>
 
   </div>
 </div>
@@ -218,9 +278,20 @@
 <div id="recordScreen" class="screen">
   <div class="viewfinder-wrap">
     <video id="viewfinder" autoplay="" playsinline="" muted=""></video>
+
+    <!-- Previous-frame PiP -->
+    <div id="pipWrap">
+      <img id="pipImg" alt="">
+      <div id="pipLabel">PREV FRAME</div>
+    </div>
+
     <div class="hud-top">
+      <!-- Status pill: changes between REC / PAUSED -->
       <div class="hud-pill rec-pill" id="recPill" style="display:none;">
         <div class="rec-dot"></div> REC
+      </div>
+      <div class="hud-pill pause-pill" id="pausePill" style="display:none;">
+        <div class="pause-dot"></div> PAUSED
       </div>
       <div class="hud-pill" id="frameCountPill">0 frames</div>
     </div>
@@ -239,9 +310,19 @@
     <div class="next-frame-label" id="nextFrameLabel">—</div>
 
     <div class="action-row">
-      <button class="action-side-btn" id="cancelBtn">✕ Cancel</button>
+      <!-- Left: discard (always present once a session exists) -->
+      <button class="action-side-btn danger" id="discardBtn" style="display:none;">
+        Discard &amp;<br>reset
+      </button>
+      <!-- When no frames yet, show a blank spacer -->
+      <div id="discardSpacer" style="flex:1;"></div>
+
       <button class="shutter-btn" id="shutterBtn"></button>
+
+      <!-- Right: export -->
       <button class="action-side-btn amber" id="exportNavBtn" style="display:none;">Export →</button>
+      <!-- Spacer when export not shown -->
+      <div id="exportSpacer" style="flex:1;"></div>
     </div>
   </div>
 </div>
@@ -288,7 +369,7 @@
     <div class="btn-group">
       <button class="full-btn primary" id="buildBtn">Build &amp; Download Video</button>
       <button class="full-btn secondary" id="addMoreBtn">← Continue Capturing</button>
-      <button class="full-btn danger" id="discardBtn">Discard All Frames</button>
+      <button class="full-btn danger" id="exportDiscardBtn">Discard frames &amp; reset</button>
     </div>
   </div>
 </div>
@@ -298,79 +379,117 @@
 <script>
 'use strict';
 
-// ═══════════════════════════════════════════════════════════════
-//  IndexedDB  —  frames are persisted to flash, not kept in RAM.
-//
-//  At 98% JPEG quality the iPhone 15 main camera produces ~3-5 MB
-//  per frame.  30 minutes at 1 s intervals = 1 800 frames ≈ 5–9 GB.
-//  Keeping Blobs in a JS array would exhaust the browser's heap
-//  within minutes.  IndexedDB writes to the device's SSD instead,
-//  keeping RAM usage flat regardless of session length.
-// ═══════════════════════════════════════════════════════════════
-const IDB_NAME    = 'framelapse_v1';
-const IDB_STORE   = 'frames';
-let   idb         = null;
+// ═══════════════════════════════════════════════════════════
+//  IndexedDB
+//  Two stores:
+//    'frames'  — { n, blob }
+//    'meta'    — { key, value }  (stores sessionStart, interval, etc.)
+// ═══════════════════════════════════════════════════════════
+const IDB_NAME  = 'framelapse_v1';
+const IDB_VER   = 2;
+let   idb       = null;
 
 function openIDB() {
   return new Promise((res, rej) => {
-    const req = indexedDB.open(IDB_NAME, 1);
+    const req = indexedDB.open(IDB_NAME, IDB_VER);
     req.onupgradeneeded = e => {
       const db = e.target.result;
-      if (!db.objectStoreNames.contains(IDB_STORE))
-        db.createObjectStore(IDB_STORE, { keyPath: 'n' });
+      if (!db.objectStoreNames.contains('frames'))
+        db.createObjectStore('frames', { keyPath: 'n' });
+      if (!db.objectStoreNames.contains('meta'))
+        db.createObjectStore('meta',   { keyPath: 'key' });
     };
     req.onsuccess = e => { idb = e.target.result; res(); };
     req.onerror   = e => rej(e.target.error);
   });
 }
 
-function idbPut(n, blob) {
+// frames store
+function idbPutFrame(n, blob) {
   return new Promise((res, rej) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).put({ n, blob });
-    tx.oncomplete = res;
-    tx.onerror    = e => rej(e.target.error);
+    const tx = idb.transaction('frames', 'readwrite');
+    tx.objectStore('frames').put({ n, blob });
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
   });
 }
-
-function idbGet(n) {
+function idbGetFrame(n) {
   return new Promise((res, rej) => {
-    const tx  = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).get(n);
+    const tx  = idb.transaction('frames', 'readonly');
+    const req = tx.objectStore('frames').get(n);
     req.onsuccess = e => res(e.target.result?.blob ?? null);
     req.onerror   = e => rej(e.target.error);
   });
 }
-
-function idbClear() {
+function idbCountFrames() {
   return new Promise((res, rej) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).clear();
-    tx.oncomplete = res;
-    tx.onerror    = e => rej(e.target.error);
+    const tx  = idb.transaction('frames', 'readonly');
+    const req = tx.objectStore('frames').count();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function idbClearFrames() {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction('frames', 'readwrite');
+    tx.objectStore('frames').clear();
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
+// meta store
+function idbSetMeta(key, value) {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction('meta', 'readwrite');
+    tx.objectStore('meta').put({ key, value });
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
+function idbGetMeta(key) {
+  return new Promise((res, rej) => {
+    const tx  = idb.transaction('meta', 'readonly');
+    const req = tx.objectStore('meta').get(key);
+    req.onsuccess = e => res(e.target.result?.value ?? null);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+function idbClearMeta() {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction('meta', 'readwrite');
+    tx.objectStore('meta').clear();
+    tx.oncomplete = res; tx.onerror = e => rej(e.target.error);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
 //  STATE
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 const S = {
-  devices:      { ultrawide: null, wide: null, tele: null },
-  stream:       null,
-  currentLens:  'wide',
-  intervalSec:  8.0,    // exact float — never rounded
+  // camera
+  devices:     { ultrawide: null, wide: null, tele: null },
+  stream:      null,
+  currentLens: 'wide',
+  vidW: 0, vidH: 0,
+
+  // session — persisted to IDB meta
+  intervalSec:  8.0,   // exact float, never rounded
   outputFps:    30,
-  recording:    false,
-  frameCount:   0,      // frames successfully written to IDB
-  nextFrameAt:  0,      // absolute perf.now() target
+  sessionStart: null,  // performance.now() value when frame 1 was captured
+  frameCount:   0,     // total frames successfully written to IDB
+
+  // runtime
+  recording:    false, // true = actively capturing frames
+  hasSession:   false, // true = sessionStart is set (even if paused)
+  nextFrameAt:  0,     // absolute perf.now() of next scheduled capture
   captureTimer: null,
   rafId:        null,
-  vidW: 0, vidH: 0,
+
+  // PiP
+  pipObjectUrl: null,  // URL for the current PiP image (revoked on next capture)
 };
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //  HELPERS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 const $     = id => document.getElementById(id);
 const cc    = $('captureCanvas');
 const cx    = cc.getContext('2d');
@@ -381,24 +500,67 @@ function showScreen(id) {
   $(id).classList.add('active');
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  BOOT — open IDB before anything else
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  BOOT — open IDB, check for leftover session
+// ═══════════════════════════════════════════════════════════
 (async () => {
+  try { await openIDB(); } catch(e) { console.error('[FrameLapse] IDB failed:', e); }
+
+  let savedCount    = 0;
+  let savedInterval = null;
+  let savedFps      = null;
   try {
-    await openIDB();
-    // Clear any leftover frames from a previous crashed session
-    await idbClear();
-  } catch(e) {
-    console.error('[FrameLapse] IDB open failed:', e);
+    savedCount    = await idbCountFrames();
+    savedInterval = await idbGetMeta('intervalSec');
+    savedFps      = await idbGetMeta('outputFps');
+  } catch(_) {}
+
+  const overlay = $('initOverlay');
+
+  if (savedCount > 0 && savedInterval != null) {
+    // A previous session exists — offer to resume
+    $('overlaySpinner').style.display = 'none';
+    $('overlayResume').style.display  = 'flex';
+    $('resumeSubtext').textContent =
+      `${savedCount} frame${savedCount !== 1 ? 's' : ''} · ${savedInterval} s interval`;
+
+    $('resumeDiscard').onclick = async () => {
+      await idbClearFrames().catch(() => {});
+      await idbClearMeta().catch(() => {});
+      overlay.classList.add('hidden');
+      showScreen('setupScreen');
+    };
+
+    $('resumeLoad').onclick = () => {
+      // Restore session state
+      S.intervalSec  = parseFloat(savedInterval);
+      S.outputFps    = parseInt(savedFps) || 30;
+      S.frameCount   = savedCount;
+      S.hasSession   = true;
+      // sessionStart is reconstructed relative to now — we don't know
+      // the original wall time, so we set it so the NEXT slot aligns
+      // to the nearest future beat.
+      const intervalMs  = S.intervalSec * 1000;
+      const now         = performance.now();
+      // Place sessionStart such that the last captured frame would have
+      // been at sessionStart + (frameCount - 1) * intervalMs, and future
+      // beats remain on the same grid.
+      S.sessionStart = now - (savedCount) * intervalMs;
+      overlay.classList.add('hidden');
+      resumeToRecordScreen();
+    };
+  } else {
+    // Fresh start
+    await idbClearFrames().catch(() => {});
+    await idbClearMeta().catch(() => {});
+    overlay.classList.add('hidden');
+    showScreen('setupScreen');
   }
-  $('dbOverlay').classList.add('hidden');
-  showScreen('setupScreen');
 })();
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //  SETUP UI
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 let _lens = 'wide', _fps = 30;
 
 document.querySelectorAll('#setupLensRow .pill').forEach(b =>
@@ -409,35 +571,20 @@ document.querySelectorAll('#setupLensRow .pill').forEach(b =>
   })
 );
 
-// Interval: show exact milliseconds + storage/RAM estimate
 function updateEstimate() {
-  const raw = $('intervalInput').value;
-  const val = parseFloat(raw);
-  const pd  = $('precisionDisplay');
-  const se  = $('storageEstimate');
-
+  const raw = $('intervalInput').value, val = parseFloat(raw);
+  const pd  = $('precisionDisplay'), se = $('storageEstimate');
   if (!raw || isNaN(val) || val <= 0) {
     pd.textContent = ''; pd.className = 'precision-display';
     se.classList.remove('show'); return;
   }
-
   pd.textContent = `= ${(val * 1000).toPrecision(12).replace(/\.?0+$/, '')} ms  (stored exactly as entered)`;
   pd.className   = 'precision-display ok';
-
-  // Rough JPEG size per frame (MB) by lens — conservative estimates
-  const sizeByLens = { ultrawide: 3, wide: 5, tele: 3 }; // MB
-  const mbPerFrame = sizeByLens[_lens] ?? 4;
-
-  const frames30  = Math.round(30 * 60 / val);
-  const gb30      = (frames30 * mbPerFrame / 1024).toFixed(1);
-
-  se.innerHTML = `
-    <strong>30 min session</strong>: ~${frames30} frames · ~${gb30} GB on-device storage<br>
-    Frames are saved to device storage (IndexedDB), not RAM — memory usage stays flat.
-  `;
+  const mb = { ultrawide:3, wide:5, tele:3 }[_lens] ?? 4;
+  const n  = Math.round(30 * 60 / val);
+  se.innerHTML = `<strong>30 min session</strong>: ~${n} frames · ~${(n * mb / 1024).toFixed(1)} GB on flash<br>RAM usage stays flat — frames go directly to device storage.`;
   se.classList.add('show');
 }
-
 $('intervalInput').addEventListener('input', updateEstimate);
 updateEstimate();
 
@@ -449,64 +596,85 @@ document.querySelectorAll('#fpsRow .fps-pill').forEach(b =>
 );
 
 $('startBtn').addEventListener('click', async () => {
-  const raw = $('intervalInput').value.trim();
-  const val = parseFloat(raw);
+  const raw = $('intervalInput').value.trim(), val = parseFloat(raw);
   if (!raw || isNaN(val) || val <= 0) {
     $('setupError').textContent = 'Enter a valid positive interval (e.g. 8.0 or 2.125)'; return;
   }
-
-  S.intervalSec = val;   // raw float — never rounded
+  S.intervalSec = val;
   S.outputFps   = _fps;
   S.currentLens = _lens;
+  S.frameCount  = 0;
+  S.hasSession  = false;
+  S.sessionStart = null;
 
   $('startBtn').disabled    = true;
   $('startBtn').textContent = 'Opening camera…';
   $('setupError').textContent = '';
-
-  try { await initCamera(); }
-  catch(e) {
+  try {
+    await idbSetMeta('intervalSec', S.intervalSec);
+    await idbSetMeta('outputFps',   S.outputFps);
+    await initCamera();
+  } catch(e) {
     $('setupError').textContent = 'Camera error: ' + (e.message || e);
     $('startBtn').disabled    = false;
     $('startBtn').textContent = 'Initialize Camera';
   }
 });
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //  CAMERA
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 async function initCamera() {
-  const perm = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+  const perm = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'environment' }, audio:false });
   perm.getTracks().forEach(t => t.stop());
-
   await enumerateDevices();
   S.stream = await openLens(S.currentLens);
   await attachStream(S.stream);
   syncRecLensBtns();
+  updateRecordUI();
   showScreen('recordScreen');
-
   $('startBtn').disabled    = false;
   $('startBtn').textContent = 'Initialize Camera';
 }
 
+async function resumeToRecordScreen() {
+  try {
+    await enumerateDevicesOrSkip();
+    S.stream = await openLens(S.currentLens);
+    await attachStream(S.stream);
+    syncRecLensBtns();
+    // Restore PiP from last frame
+    await refreshPipFromIDB();
+    updateRecordUI();
+    showScreen('recordScreen');
+  } catch(e) {
+    console.error('[FrameLapse] Resume camera failed:', e);
+    showScreen('setupScreen');
+  }
+}
+
 async function enumerateDevices() {
   const cams = (await navigator.mediaDevices.enumerateDevices()).filter(d => d.kind === 'videoinput');
-  S.devices  = { ultrawide: null, wide: null, tele: null };
+  S.devices  = { ultrawide:null, wide:null, tele:null };
   for (const d of cams) {
-    const lbl = d.label.toLowerCase();
-    if      (lbl.includes('ultra') || lbl.includes('0.5'))                                   S.devices.ultrawide = S.devices.ultrawide || d.deviceId;
-    else if (lbl.includes('tele')  || lbl.includes('2x') || lbl.includes('3x'))             S.devices.tele      = S.devices.tele      || d.deviceId;
-    else if (lbl.includes('back')  || lbl.includes('rear')|| lbl.includes('1x') ||
-             lbl.includes('environment'))                                                      S.devices.wide      = S.devices.wide      || d.deviceId;
+    const l = d.label.toLowerCase();
+    if      (l.includes('ultra') || l.includes('0.5'))                            S.devices.ultrawide = S.devices.ultrawide || d.deviceId;
+    else if (l.includes('tele')  || l.includes('2x')  || l.includes('3x'))       S.devices.tele      = S.devices.tele      || d.deviceId;
+    else if (l.includes('back')  || l.includes('rear') || l.includes('1x') || l.includes('environment')) S.devices.wide = S.devices.wide || d.deviceId;
   }
   if (!S.devices.wide && cams.length) S.devices.wide = cams[cams.length - 1].deviceId;
 }
 
+async function enumerateDevicesOrSkip() {
+  try { await enumerateDevices(); } catch(_) {}
+}
+
 async function openLens(lens) {
-  const deviceId    = S.devices[lens];
-  const constraints = { video: { width: { ideal: 9999 }, height: { ideal: 9999 } }, audio: false };
-  if (deviceId) constraints.video.deviceId  = { exact: deviceId };
-  else          constraints.video.facingMode = { ideal: 'environment' };
-  return navigator.mediaDevices.getUserMedia(constraints);
+  const id  = S.devices[lens];
+  const con = { video:{ width:{ ideal:9999 }, height:{ ideal:9999 } }, audio:false };
+  if (id) con.video.deviceId  = { exact: id };
+  else    con.video.facingMode = { ideal: 'environment' };
+  return navigator.mediaDevices.getUserMedia(con);
 }
 
 async function attachStream(stream) {
@@ -541,36 +709,60 @@ function syncRecLensBtns() {
   });
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  UI STATE MACHINE
+//  States: 'idle' | 'recording' | 'paused'
+// ═══════════════════════════════════════════════════════════
+function updateRecordUI() {
+  const idle      = !S.hasSession;
+  const recording =  S.hasSession &&  S.recording;
+  const paused    =  S.hasSession && !S.recording;
+
+  // Status pills
+  $('recPill').style.display   = recording ? 'flex' : 'none';
+  $('pausePill').style.display = paused    ? 'flex' : 'none';
+
+  // Shutter button
+  const sb = $('shutterBtn');
+  sb.classList.toggle('recording', recording);
+  sb.classList.toggle('paused',    paused);
+
+  // Left side: discard or spacer
+  const hasFrames = S.frameCount > 0;
+  $('discardBtn').style.display   = hasFrames ? 'block' : 'none';
+  $('discardSpacer').style.display = hasFrames ? 'none'  : 'block';
+
+  // Right side: export or spacer
+  const canExport = paused && hasFrames;
+  $('exportNavBtn').style.display  = canExport ? 'block' : 'none';
+  $('exportSpacer').style.display  = canExport ? 'none'  : 'block';
+
+  // Progress bar style
+  $('nextFrameFill').classList.toggle('paused', paused);
+
+  // Frame counter
+  const n = S.frameCount;
+  $('frameCountPill').textContent = `${n} frame${n !== 1 ? 's' : ''}`;
+}
+
+// ═══════════════════════════════════════════════════════════
 //  RECORD SCREEN EVENTS
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 document.querySelectorAll('#recLensBar .lens-orb').forEach(b =>
   b.addEventListener('click', () => { if (!b.disabled) switchLens(b.dataset.lens); })
 );
 
-$('cancelBtn').addEventListener('click', async () => {
-  stopRecording();
-  stopCamera();
-  S.frameCount = 0;
-  await idbClear().catch(() => {});
-  $('frameCountPill').textContent = '0 frames';
-  showScreen('setupScreen');
-});
-
-$('exportNavBtn').addEventListener('click', () => { stopRecording(); openExportScreen(); });
-
 $('shutterBtn').addEventListener('click', () => {
-  if (!S.recording) startRecording();
-  else              { stopRecording(); refreshExportBtn(); }
+  if (!S.hasSession || !S.recording) startOrResume();
+  else                               pause();
 });
 
-function refreshExportBtn() {
-  $('exportNavBtn').style.display = (!S.recording && S.frameCount > 0) ? 'block' : 'none';
-}
+$('discardBtn').addEventListener('click', discardAndReset);
+$('exportNavBtn').addEventListener('click', () => { pause(); openExportScreen(); });
 
-// ═══════════════════════════════════════════════════════════════
-//  CAPTURE — draw to canvas, encode to JPEG, write to IDB
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+//  CAPTURE — draw → JPEG → IDB, then update PiP
+// ═══════════════════════════════════════════════════════════
 function captureFrame() {
   const vid = $('viewfinder');
   const w   = S.vidW || vid.videoWidth;
@@ -583,28 +775,76 @@ function captureFrame() {
   cc.toBlob(blob => {
     if (!blob) return;
     const n = ++S.frameCount;
-    $('frameCountPill').textContent = `${n} frame${n !== 1 ? 's' : ''}`;
-    // Fire-and-forget IDB write — UI stays responsive
-    idbPut(n, blob).catch(e => console.error(`[FrameLapse] Frame ${n} write failed:`, e));
+    idbPutFrame(n, blob).catch(e => console.error(`Frame ${n} write failed:`, e));
+    updatePip(blob);
+    updateRecordUI();
   }, 'image/jpeg', 0.98);
 }
 
-// ═══════════════════════════════════════════════════════════════
-//  RECORDING — drift-corrected absolute-clock scheduler
-// ═══════════════════════════════════════════════════════════════
-function startRecording() {
+// ── PiP helpers ──────────────────────────────────────────
+function updatePip(blob) {
+  // Revoke previous object URL to free memory
+  if (S.pipObjectUrl) URL.revokeObjectURL(S.pipObjectUrl);
+  S.pipObjectUrl  = URL.createObjectURL(blob);
+  $('pipImg').src = S.pipObjectUrl;
+  $('pipWrap').style.display = 'block';
+}
+
+async function refreshPipFromIDB() {
+  if (S.frameCount <= 0) return;
+  try {
+    const blob = await idbGetFrame(S.frameCount);
+    if (blob) updatePip(blob);
+  } catch(_) {}
+}
+
+// ═══════════════════════════════════════════════════════════
+//  CLOCK — continuous absolute-reference scheduler
+//
+//  sessionStart is set once when the very first frame is taken.
+//  All future frame slots are at sessionStart + k * intervalMs.
+//
+//  On resume (after a pause), we compute the next beat of the
+//  original clock that is still in the future, and schedule from
+//  there.  Time during the pause is simply skipped — no frames
+//  are inserted for those slots.
+// ═══════════════════════════════════════════════════════════
+function startOrResume() {
   S.recording = true;
-  $('shutterBtn').classList.add('recording');
-  $('recPill').style.display      = 'flex';
-  $('exportNavBtn').style.display = 'none';
-  $('cancelBtn').style.display    = 'none';
+  S.hasSession = true;
 
-  captureFrame();  // immediate first frame
+  const intervalMs = S.intervalSec * 1000;
+  const now        = performance.now();
 
-  const intervalMs = S.intervalSec * 1000;  // exact float
-  S.nextFrameAt    = performance.now() + intervalMs;
+  if (S.sessionStart === null) {
+    // First ever frame
+    S.sessionStart = now;
+    captureFrame();
+    S.nextFrameAt  = S.sessionStart + intervalMs;
+  } else {
+    // Resuming after pause.
+    // Find the next beat of the original clock that is still in the future.
+    const elapsed   = now - S.sessionStart;
+    const beatsPast = Math.floor(elapsed / intervalMs);
+    S.nextFrameAt   = S.sessionStart + (beatsPast + 1) * intervalMs;
+    // If we happen to be exactly on a beat (within 10 ms), capture now.
+    if (S.nextFrameAt - now < 10) {
+      captureFrame();
+      S.nextFrameAt = S.sessionStart + (beatsPast + 2) * intervalMs;
+    }
+  }
+
   scheduleNext();
   animateBar();
+  updateRecordUI();
+}
+
+function pause() {
+  if (!S.recording) return;
+  S.recording = false;
+  if (S.captureTimer) { clearTimeout(S.captureTimer);  S.captureTimer = null; }
+  // Keep animateBar running so user can see where they are in the cycle
+  updateRecordUI();
 }
 
 function scheduleNext() {
@@ -613,39 +853,68 @@ function scheduleNext() {
   S.captureTimer = setTimeout(() => {
     if (!S.recording) return;
     captureFrame();
-    S.nextFrameAt += S.intervalSec * 1000;  // advance — no drift accumulation
+    S.nextFrameAt += S.intervalSec * 1000;  // advance exact interval — no drift
     scheduleNext();
   }, delay);
 }
 
 function animateBar() {
-  if (!S.recording) return;
-  const intervalMs = S.intervalSec * 1000;
-  const remaining  = Math.max(0, S.nextFrameAt - performance.now());
-  $('nextFrameFill').style.width  = Math.min(100, ((intervalMs - remaining) / intervalMs) * 100) + '%';
-  $('nextFrameLabel').textContent = `Next frame in ${(remaining / 1000).toFixed(2)}s`;
-  S.rafId = requestAnimationFrame(animateBar);
+  // Keep running whether recording or paused — shows clock phase to user
+  if (S.rafId) cancelAnimationFrame(S.rafId);
+
+  const tick = () => {
+    if (!S.hasSession) return; // stop if session discarded
+    const intervalMs = S.intervalSec * 1000;
+    const now        = performance.now();
+    const elapsed    = now - S.sessionStart;
+    // Position within the current interval cycle (0–1)
+    const phase      = (elapsed % intervalMs) / intervalMs;
+    const remaining  = intervalMs - (elapsed % intervalMs);
+
+    $('nextFrameFill').style.width  = (phase * 100).toFixed(2) + '%';
+    $('nextFrameLabel').textContent = S.recording
+      ? `Next frame in ${(remaining / 1000).toFixed(2)}s`
+      : `Clock: ${(remaining / 1000).toFixed(2)}s to next beat (paused)`;
+
+    S.rafId = requestAnimationFrame(tick);
+  };
+  S.rafId = requestAnimationFrame(tick);
 }
 
-function stopRecording() {
-  if (!S.recording) return;
-  S.recording = false;
-  if (S.captureTimer) { clearTimeout(S.captureTimer);  S.captureTimer = null; }
-  if (S.rafId)        { cancelAnimationFrame(S.rafId); S.rafId        = null; }
-  $('shutterBtn').classList.remove('recording');
-  $('recPill').style.display      = 'none';
-  $('cancelBtn').style.display    = 'block';
+async function discardAndReset() {
+  // Stop everything
+  S.recording   = false;
+  S.hasSession  = false;
+  S.sessionStart = null;
+  S.frameCount  = 0;
+  S.nextFrameAt = 0;
+  if (S.captureTimer) { clearTimeout(S.captureTimer); S.captureTimer = null; }
+  if (S.rafId)        { cancelAnimationFrame(S.rafId); S.rafId = null; }
+
+  // Clear PiP
+  if (S.pipObjectUrl) { URL.revokeObjectURL(S.pipObjectUrl); S.pipObjectUrl = null; }
+  $('pipImg').src         = '';
+  $('pipWrap').style.display = 'none';
+
+  // Clear storage
+  await idbClearFrames().catch(() => {});
+  await idbClearMeta().catch(() => {});
+
+  // Reset bar and counter
   $('nextFrameFill').style.width  = '0%';
+  $('nextFrameFill').classList.remove('paused');
   $('nextFrameLabel').textContent = '—';
-  refreshExportBtn();
+  $('frameCountPill').textContent = '0 frames';
+
+  updateRecordUI();
 }
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //  EXPORT SCREEN
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 function openExportScreen() {
   const n    = S.frameCount;
-  const lens = { ultrawide:'0.5× Ultra Wide', wide:'1× Wide', tele:'2× Telephoto' }[S.currentLens];
+  const lens = { ultrawide:'0.5× Ultra Wide', wide:'1× Wide', tele:'2× Telephoto' }[S.currentLens] ?? '—';
   $('statFrames').textContent   = n;
   $('statDuration').textContent = (n / S.outputFps).toFixed(1) + 's';
   $('sumInterval').textContent  = S.intervalSec + ' s';
@@ -660,16 +929,16 @@ function openExportScreen() {
   $('buildBtn').textContent  = 'Build & Download Video';
   $('buildBtn').disabled     = false;
   $('addMoreBtn').disabled   = false;
-  $('discardBtn').disabled   = false;
+  $('exportDiscardBtn').disabled = false;
   showScreen('exportScreen');
 }
 
 $('exportBackBtn').addEventListener('click', () => showScreen('recordScreen'));
 $('addMoreBtn').addEventListener('click',    () => showScreen('recordScreen'));
-$('discardBtn').addEventListener('click', async () => {
-  S.frameCount = 0;
-  $('frameCountPill').textContent = '0 frames';
-  await idbClear().catch(() => {});
+$('exportDiscardBtn').addEventListener('click', async () => {
+  showScreen('recordScreen');
+  await discardAndReset();
+  // Also stop camera and return to setup
   stopCamera();
   showScreen('setupScreen');
   $('startBtn').disabled    = false;
@@ -677,25 +946,14 @@ $('discardBtn').addEventListener('click', async () => {
 });
 $('buildBtn').addEventListener('click', buildVideo);
 
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 //  VIDEO ASSEMBLY — frame-perfect canvas renderer
-//
-//  Each frame is read from IDB, drawn to canvas, then we sleep
-//  only the REMAINING time in that frame's slot window so the
-//  captureStream sampler always finds a fresh, unique frame.
-//
-//  Tail-frame fix: after painting the last frame we hold for
-//  THREE extra frame durations before stopping the recorder.
-//  captureStream's internal clock needs at least one full cycle
-//  after the final paint to actually sample it; three gives
-//  comfortable headroom for slower devices.
-// ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 async function buildVideo() {
   if (!S.frameCount) { alert('No frames captured.'); return; }
-
-  $('buildBtn').disabled   = true;
-  $('addMoreBtn').disabled = true;
-  $('discardBtn').disabled = true;
+  $('buildBtn').disabled     = true;
+  $('addMoreBtn').disabled   = true;
+  $('exportDiscardBtn').disabled = true;
   $('exportProgressWrap').style.display = 'block';
   $('downloadLinkWrap').style.display   = 'none';
   $('downloadNote').style.display       = 'none';
@@ -706,8 +964,8 @@ async function buildVideo() {
   };
 
   try {
-    sp('Reading first frame from storage…', 2);
-    const firstBlob = await idbGet(1);
+    sp('Reading first frame…', 2);
+    const firstBlob = await idbGetFrame(1);
     if (!firstBlob) throw new Error('First frame missing from storage.');
 
     const firstBmp = await createImageBitmap(firstBlob);
@@ -730,8 +988,7 @@ async function buildVideo() {
     const chunks   = [];
     recorder.ondataavailable = e => { if (e.data?.size) chunks.push(e.data); };
 
-    // Exact frame slot duration — no rounding
-    const frameDuration = 1000 / fps;
+    const frameDuration = 1000 / fps;  // exact ms per output frame
 
     const videoBlob = await new Promise((resolve, reject) => {
       recorder.onstop  = () => resolve(new Blob(chunks, { type: mimeType }));
@@ -739,33 +996,26 @@ async function buildVideo() {
       recorder.start(200);
 
       (async () => {
-        // Absolute deadline: the moment the captureStream sampler should
-        // snapshot this frame's slot.
         let deadline = performance.now() + frameDuration;
 
         for (let i = 1; i <= S.frameCount; i++) {
           sp(`Rendering frame ${i} / ${S.frameCount}`,
              5 + Math.round(((i - 1) / S.frameCount) * 88));
 
-          const blob = await idbGet(i);
+          const blob = await idbGetFrame(i);
           if (!blob) { console.warn(`Frame ${i} missing, skipping`); deadline += frameDuration; continue; }
 
           const bmp = await createImageBitmap(blob);
           ctx.drawImage(bmp, 0, 0, W, H);
           bmp.close();
 
-          // Sleep remaining time in this slot; drawing typically takes 2–5 ms
           const rem = deadline - performance.now();
           if (rem > 1) await sleep(rem);
-
-          // Advance to next slot — no drift accumulation
           deadline += frameDuration;
         }
 
-        // ── TAIL FIX ──────────────────────────────────────────────
-        // Hold the last painted frame for 3 extra slot durations.
-        // captureStream needs at least one full clock cycle to sample
-        // the final canvas state; 3 cycles gives reliable headroom.
+        // Hold last frame for 3 extra slots — captureStream needs
+        // at least one full cycle to sample the final canvas state.
         sp('Flushing last frames…', 94);
         await sleep(frameDuration * 3);
 
@@ -777,7 +1027,7 @@ async function buildVideo() {
     sp('Done — starting download…', 100);
 
     const ext  = mimeType.includes('mp4') ? 'mp4' : 'webm';
-    const ts   = new Date().toISOString().slice(0,19).replace(/[:T]/g, '-');
+    const ts   = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-');
     const name = `framelapse_${ts}.${ext}`;
     const url  = URL.createObjectURL(videoBlob);
 
@@ -796,19 +1046,16 @@ async function buildVideo() {
     sp('❌ Export failed: ' + (err.message || err), 0);
     console.error('[FrameLapse] buildVideo error:', err);
   } finally {
-    $('buildBtn').disabled   = false;
-    $('addMoreBtn').disabled = false;
-    $('discardBtn').disabled = false;
+    $('buildBtn').disabled     = false;
+    $('addMoreBtn').disabled   = false;
+    $('exportDiscardBtn').disabled = false;
   }
 }
 
 function pickMime() {
   for (const m of [
-    'video/mp4;codecs=avc1.42E01E',
-    'video/mp4',
-    'video/webm;codecs=vp9',
-    'video/webm;codecs=vp8',
-    'video/webm',
+    'video/mp4;codecs=avc1.42E01E', 'video/mp4',
+    'video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm',
   ]) if (MediaRecorder.isTypeSupported(m)) return m;
   return '';
 }
